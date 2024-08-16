@@ -5,7 +5,6 @@ import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
 import org.springframework.data.domain.Page;
 import ru.skillbox.rest_news_service.model.Author;
-import ru.skillbox.rest_news_service.model.Comment;
 import ru.skillbox.rest_news_service.model.News;
 import ru.skillbox.rest_news_service.web.model.AuthorListResponse;
 import ru.skillbox.rest_news_service.web.model.AuthorResponse;

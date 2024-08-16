@@ -7,17 +7,22 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.skillbox.rest_news_service.exception.EntityNotFoundException;
+import ru.skillbox.rest_news_service.mapper.AuthorMapper;
 import ru.skillbox.rest_news_service.model.Author;
 import ru.skillbox.rest_news_service.model.News;
 import ru.skillbox.rest_news_service.repository.AuthorRepository;
 import ru.skillbox.rest_news_service.repository.CommentRepository;
 import ru.skillbox.rest_news_service.repository.NewsRepository;
 import ru.skillbox.rest_news_service.service.AuthorService;
+import ru.skillbox.rest_news_service.service.CategoryService;
 import ru.skillbox.rest_news_service.utils.BeanUtils;
+import ru.skillbox.rest_news_service.web.model.AuthorListResponse;
+import ru.skillbox.rest_news_service.web.model.AuthorResponse;
+import ru.skillbox.rest_news_service.web.model.CreateAuthorWithNewsRequest;
+import ru.skillbox.rest_news_service.web.model.UpsertAuthorRequest;
 
 import java.text.MessageFormat;
 import java.util.List;
-import java.util.Optional;
 
 
 @Service
@@ -25,11 +30,19 @@ import java.util.Optional;
 public class AuthorServiceImpl implements AuthorService {
     private final AuthorRepository authorRepository;
     private final NewsRepository newsRepository;
-    private final CommentRepository commentRepository;
+    private final AuthorMapper authorMapper;
+    private final CategoryService categoryService;
 
     @Override
     @Transactional
-    public Author saveWithNews(Author author, List<News> newsList) {
+    public AuthorResponse saveWithNews(CreateAuthorWithNewsRequest request) {
+        Author author = Author.builder().name(request.getName()).build();
+
+        List<News> newsList = request.getNewsList().stream().map(newsRequest ->
+                News.builder()
+                        .newsText(newsRequest.getNewsText())
+                        .category(categoryService.findCategoryById(newsRequest.getCategoryId()))
+                        .build()).toList();
         Author savedAuthor = authorRepository.save(author);
 
         for (News news : newsList) {
@@ -37,32 +50,41 @@ public class AuthorServiceImpl implements AuthorService {
             var savedNews = newsRepository.save(news);
             savedAuthor.addNews(savedNews);
         }
-        return savedAuthor;
+        return authorMapper.authorToResponse(savedAuthor);
     }
 
     @Override
-    public Page<Author> findAll(int page, int size) {
+    public AuthorListResponse findAll(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return authorRepository.findAll(pageable);
+        return authorMapper.authorListToAuthorResponseList(authorRepository.findAll(pageable));
     }
 
     @Override
-    public Author findById(Long id) {
+    public AuthorResponse findById(Long id) {
+        return authorMapper.authorToResponse(authorRepository.findById(id).orElseThrow(() ->
+                new EntityNotFoundException(MessageFormat.format("Автор с ID {0} не найден", id))));
+    }
+
+    @Override
+    public Author findAuthorById(Long id) {
         return authorRepository.findById(id).orElseThrow(() ->
                 new EntityNotFoundException(MessageFormat.format("Автор с ID {0} не найден", id)));
     }
 
     @Override
-    public Author save(Author author) {
-        return authorRepository.save(author);
+    public AuthorResponse save(UpsertAuthorRequest request) {
+        Author author = authorMapper.requestToAuthor(request);
+        return authorMapper.authorToResponse(authorRepository.save(author));
     }
 
     @Override
-    public Author update(Author author) {
-        Author existedAuthor = findById(author.getId());
-        BeanUtils.copyNonNullProperties(author, existedAuthor);
+    public AuthorResponse update(UpsertAuthorRequest request, Long authorId) {
+        Author updatedAuthor = authorMapper.requestToAuthor(authorId, request);
+        Author existedAuthor = findAuthorById(authorId);
 
-        return authorRepository.save(author);
+        BeanUtils.copyAuthorNotNullProperties(updatedAuthor, existedAuthor);
+
+        return authorMapper.authorToResponse(updatedAuthor);
     }
 
     @Override

@@ -11,8 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.skillbox.rest_news_service.exception.EntityNotFoundException;
-import ru.skillbox.rest_news_service.mapper.CommentMapper;
 import ru.skillbox.rest_news_service.model.Comment;
 import ru.skillbox.rest_news_service.service.CommentService;
 import ru.skillbox.rest_news_service.web.model.*;
@@ -23,7 +21,6 @@ import ru.skillbox.rest_news_service.web.model.*;
 @Tag(name = "Comment v1", description = "Comment API version V1")
 public class CommentController {
     private final CommentService commentService;
-    private final CommentMapper commentMapper;
 
     @Operation(summary = "Get comment by id",
             description = "Get comment by id",
@@ -39,26 +36,20 @@ public class CommentController {
     })
     @GetMapping("/{id}")
     public ResponseEntity<CommentResponse> findById(@PathVariable Long id) {
-
-        return ResponseEntity.ok(
-                commentMapper.commentToResponse(commentService.findById(id))
-        );
+        return ResponseEntity.ok(commentService.findById(id));
     }
 
     @PostMapping
     public ResponseEntity<CommentResponse> create(@RequestBody @Valid UpsertCommentRequest request) {
-        Comment newComment = commentService.save(commentMapper.requestToComment(request));
-
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(commentMapper.commentToResponse(newComment));
+                .body(commentService.save(request));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CommentResponse> update(@PathVariable("id") Long commentId,@RequestParam Long authorId,
+    public ResponseEntity<CommentResponse> update(@PathVariable("id") Long commentId, @RequestParam Long authorId,
                                                   @RequestBody UpsertCommentRequest request) {
-        Comment updatedComment = commentService.update(commentMapper.requestToComment(commentId, request));
 
-        return ResponseEntity.ok(commentMapper.commentToResponse(updatedComment));
+        return ResponseEntity.ok(commentService.update(commentId, request));
     }
 
     @Operation(summary = "Delete comment by id",

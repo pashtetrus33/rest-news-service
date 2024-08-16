@@ -4,65 +4,98 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.skillbox.rest_news_service.aop.CheckOwnershipable;
 import ru.skillbox.rest_news_service.exception.EntityNotFoundException;
+import ru.skillbox.rest_news_service.mapper.CommentMapper;
+import ru.skillbox.rest_news_service.mapper.NewsMapper;
 import ru.skillbox.rest_news_service.model.Author;
 import ru.skillbox.rest_news_service.model.Comment;
 import ru.skillbox.rest_news_service.model.News;
+import ru.skillbox.rest_news_service.repository.AuthorRepository;
 import ru.skillbox.rest_news_service.repository.CommentRepository;
-import ru.skillbox.rest_news_service.service.AuthorService;
 import ru.skillbox.rest_news_service.service.CommentService;
 import ru.skillbox.rest_news_service.service.NewsService;
 import ru.skillbox.rest_news_service.utils.BeanUtils;
+import ru.skillbox.rest_news_service.web.model.CommentResponse;
+import ru.skillbox.rest_news_service.web.model.UpsertCommentRequest;
+import ru.skillbox.rest_news_service.web.model.UpsertNewsRequest;
 
 import java.text.MessageFormat;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class CommentServiceImpl implements CommentService {
 
     private final CommentRepository commentRepository;
-    private final AuthorService authorService;
     private final NewsService newsService;
+    private final AuthorRepository authorRepository;
+    private final CommentMapper commentMapper;
+    private final NewsMapper newsMapper;
 
 //    @Override
 //    public List<Comment> findAll() {
 //        return commentRepository.findAll();
+
 //    }
 
     @Override
-    public Comment findById(Long id) {
+    public CommentResponse findById(Long id) {
+        return commentMapper.commentToResponse(commentRepository.findById(id).orElseThrow(() ->
+                new EntityNotFoundException(MessageFormat.format("Комментарий с ID {0} не найден", id))));
+    }
+
+    @Override
+    public Comment findCommentById(Long id) {
         return commentRepository.findById(id).orElseThrow(() ->
                 new EntityNotFoundException(MessageFormat.format("Комментарий с ID {0} не найден", id)));
     }
 
     @Override
-    public Comment save(Comment comment) {
-        Author author = authorService.findById(comment.getAuthor().getId());
-        News news = newsService.findById(comment.getNews().getId());
+    public CommentResponse save(UpsertCommentRequest request) {
+        Comment comment = commentMapper.requestToComment(request);
+        Author author = authorRepository.findById(comment.getId()).orElseThrow(() ->
+                new EntityNotFoundException(MessageFormat.format("Комментарий с ID {0} не найден", comment.getId())));
+        News news = newsService.findNewsById(comment.getNews().getId());
         news.setComment(comment);
         comment.setNews(news);
         comment.setAuthor(author);
-        return commentRepository.save(comment);
+        return commentMapper.commentToResponse(commentRepository.save(comment));
     }
 
     @Override
     @CheckOwnershipable
-    public Comment update(Comment comment) {
-        Author author = authorService.findById(comment.getAuthor().getId());
-        News news = newsService.findById(comment.getNews().getId());
+    public CommentResponse update(Long commentId, UpsertCommentRequest request) {
 
-        // Обновляем комментарий
-        Comment existingComment = findById(comment.getId());
-        BeanUtils.copyNonNullProperties(comment, existingComment);
+        // Найдем существующий комментарий по commentId
+        Comment existingComment = findCommentById(commentId);
+
+        // Обновим поля комментария на основе запроса
+        Comment comment = commentMapper.requestToComment(commentId, request);
+        BeanUtils.copyCommentNonNullProperties(existingComment,comment);
+
+        // Найдем автора комментария по ID
+        Author author = authorRepository.findById(request.getAuthorId())
+                .orElseThrow(() -> new EntityNotFoundException(MessageFormat.format("Автор с ID {0} не найден", request.getAuthorId())));
+
         existingComment.setAuthor(author);
+
+
+        News news = newsService.findNewsById(request.getNewsId());
         existingComment.setNews(news);
+
+
+        // Сохраняем обновленный комментарий
         commentRepository.save(existingComment);
 
         // Обновляем новость, если это необходимо
-        news.setComment(existingComment);
-        newsService.save(news);
+        if (existingComment.getNews() != null) {
+            news = existingComment.getNews();
+            news.setComment(existingComment);
+            UpsertNewsRequest upsertNewsRequest = new UpsertNewsRequest();
+            upsertNewsRequest.setNewsText(news.getNewsText());
+            // Дополните остальными необходимыми полями
+            newsService.save(upsertNewsRequest);
+        }
 
-        return existingComment;
+        return commentMapper.commentToResponse(existingComment);
     }
 
 

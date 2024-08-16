@@ -1,21 +1,26 @@
 package ru.skillbox.rest_news_service.service;
 
-import org.springframework.data.domain.Page;
 import ru.skillbox.rest_news_service.model.Author;
 import ru.skillbox.rest_news_service.model.News;
+import ru.skillbox.rest_news_service.web.model.AuthorListResponse;
+import ru.skillbox.rest_news_service.web.model.AuthorResponse;
+import ru.skillbox.rest_news_service.web.model.CreateAuthorWithNewsRequest;
+import ru.skillbox.rest_news_service.web.model.UpsertAuthorRequest;
 
 import java.util.List;
 
 public interface AuthorService {
-    Page<Author> findAll(int page, int size);
+    AuthorListResponse findAll(int page, int size);
 
-    Author findById(Long id);
+    AuthorResponse findById(Long id);
 
-    Author save(Author author);
+    Author findAuthorById(Long id);
 
-    Author update(Author author);
+    AuthorResponse save(UpsertAuthorRequest request);
+
+    AuthorResponse update(UpsertAuthorRequest request, Long authorId);
 
     void deleteById(Long id);
 
-    Author saveWithNews(Author author, List<News> news);
+    AuthorResponse saveWithNews(CreateAuthorWithNewsRequest request);
 }

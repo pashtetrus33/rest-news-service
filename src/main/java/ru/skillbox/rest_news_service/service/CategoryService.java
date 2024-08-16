@@ -1,19 +1,22 @@
 package ru.skillbox.rest_news_service.service;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import ru.skillbox.rest_news_service.model.Category;
+import ru.skillbox.rest_news_service.web.model.CategoryListResponse;
+import ru.skillbox.rest_news_service.web.model.CategoryResponse;
+import ru.skillbox.rest_news_service.web.model.UpsertCategoryRequest;
 
 import java.util.List;
 
 public interface CategoryService {
-    Page<Category> findAll(int page, int size);
+    CategoryListResponse findAll(int page, int size);
 
-    Category findById(Long id);
+    CategoryResponse findById(Long id);
 
-    Category save(Category category);
+    Category findCategoryById(Long id);
 
-    Category update(Category category);
+    CategoryResponse save(UpsertCategoryRequest request);
+
+    CategoryResponse update(Long categoryId, UpsertCategoryRequest request);
 
     void deleteById(Long id);
 

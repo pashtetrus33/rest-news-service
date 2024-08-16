@@ -19,6 +19,7 @@ spring:
       connection-timeout: 10000
 server:
   port: 8080
+  url: http://localhost:8081
 
 app:
   check-author-api-header: false

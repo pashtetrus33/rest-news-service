@@ -11,7 +11,6 @@ import ru.skillbox.rest_news_service.model.Category;
 import ru.skillbox.rest_news_service.model.Comment;
 import ru.skillbox.rest_news_service.model.News;
 import ru.skillbox.rest_news_service.web.model.AuthorResponse;
-import ru.skillbox.rest_news_service.web.model.CategoryResponse;
 import ru.skillbox.rest_news_service.web.model.NewsResponse;
 
 import java.time.Instant;

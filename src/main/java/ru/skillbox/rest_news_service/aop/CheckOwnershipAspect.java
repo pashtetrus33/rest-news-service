@@ -17,7 +17,6 @@ import org.springframework.web.servlet.HandlerMapping;
 import ru.skillbox.rest_news_service.exception.AccessDeniedException;
 import ru.skillbox.rest_news_service.model.Comment;
 import ru.skillbox.rest_news_service.model.News;
-import ru.skillbox.rest_news_service.service.AuthorService;
 import ru.skillbox.rest_news_service.service.CommentService;
 import ru.skillbox.rest_news_service.service.NewsService;
 
@@ -75,7 +74,7 @@ public class CheckOwnershipAspect {
 
             if (requestPath.contains("/comment")) {
                 log.info("Вызов commentService для обработки запроса");
-                Comment comment = commentService.findById(targetId);
+                Comment comment = commentService.findCommentById(targetId);
                 Long commentAuthorId = comment.getAuthor().getId();
 
                 if (commentAuthorId.equals(authorId)) {
@@ -89,7 +88,7 @@ public class CheckOwnershipAspect {
                 }
             } else if (requestPath.contains("/news")) {
                 log.info("Вызов newsService для обработки запроса");
-                News news = newsService.findById(targetId);
+                News news = newsService.findNewsById(targetId);
                 Long newsAuthorId = news.getAuthor().getId();
 
                 if (newsAuthorId.equals(authorId)) {

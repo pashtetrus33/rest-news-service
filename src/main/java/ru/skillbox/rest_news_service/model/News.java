@@ -23,6 +23,12 @@ public class News {
 
     private String newsText;
 
+    @CreationTimestamp
+    private Instant created;
+
+    @UpdateTimestamp
+    private Instant updatedAt;
+
     @ManyToOne
     @JoinColumn(name = "author_id")
     @ToString.Exclude
@@ -37,12 +43,6 @@ public class News {
     @JoinColumn(name = "category_id")
     @ToString.Exclude
     private Category category;
-
-    @CreationTimestamp
-    private Instant created;
-
-    @UpdateTimestamp
-    private Instant updatedAt;
 
     public void setComment(Comment comment) {
         comments.add(comment);

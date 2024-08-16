@@ -11,8 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.skillbox.rest_news_service.exception.EntityNotFoundException;
-import ru.skillbox.rest_news_service.mapper.AuthorMapper;
 import ru.skillbox.rest_news_service.model.Author;
 import ru.skillbox.rest_news_service.model.News;
 import ru.skillbox.rest_news_service.service.AuthorService;
@@ -28,7 +26,6 @@ import java.util.List;
 public class AuthorController {
 
     private final AuthorService authorService;
-    private final AuthorMapper authorMapper;
     private final CategoryService categoryService;
 
     @Operation(summary = "Get authors", description = "Get all authors", tags = {"author"})
@@ -36,9 +33,7 @@ public class AuthorController {
     public ResponseEntity<AuthorListResponse> findAll(@RequestParam(defaultValue = "0") int page,
                                                       @RequestParam(defaultValue = "10") int size) {
 
-        return ResponseEntity.ok(
-                authorMapper.authorListToAuthorResponseList(authorService.findAll(page, size))
-        );
+        return ResponseEntity.ok(authorService.findAll(page, size));
     }
 
     @Operation(summary = "Get author by id",
@@ -56,25 +51,20 @@ public class AuthorController {
     @GetMapping("/{id}")
     public ResponseEntity<AuthorResponse> findById(@PathVariable Long id) {
 
-        return ResponseEntity.ok(
-                authorMapper.authorToResponse(authorService.findById(id))
-        );
+        return ResponseEntity.ok((authorService.findById(id)));
     }
 
     @PostMapping
     public ResponseEntity<AuthorResponse> create(@RequestBody @Valid UpsertAuthorRequest request) {
-        Author newAuthor = authorService.save(authorMapper.requestToAuthor(request));
-
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(authorMapper.authorToResponse(newAuthor));
+                .body(authorService.save((request)));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<AuthorResponse> update(@PathVariable("id") Long authorId,
                                                  @RequestBody @Valid UpsertAuthorRequest request) {
-        Author updatedAuthor = authorService.update(authorMapper.requestToAuthor(authorId, request));
 
-        return ResponseEntity.ok(authorMapper.authorToResponse(updatedAuthor));
+        return ResponseEntity.ok(authorService.update(request, authorId));
     }
 
     @Operation(summary = "Delete author by id",
@@ -89,13 +79,7 @@ public class AuthorController {
 
     @PostMapping("/save-with-news")
     public ResponseEntity<AuthorResponse> createWithNews(@RequestBody @Valid CreateAuthorWithNewsRequest request) {
-        Author author = Author.builder().name(request.getName()).build();
 
-        List<News> newsList = request.getNewsList().stream().map(newsRequest ->
-                News.builder()
-                        .newsText(newsRequest.getNewsText())
-                        .category(categoryService.findById(newsRequest.getCategoryId()))
-                        .build()).toList();
-        return ResponseEntity.status(HttpStatus.CREATED).body(authorMapper.authorToResponse(authorService.saveWithNews(author, newsList)));
+        return ResponseEntity.status(HttpStatus.CREATED).body(authorService.saveWithNews(request));
     }
 }

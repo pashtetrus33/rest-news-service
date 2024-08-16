@@ -1,20 +1,21 @@
 package ru.skillbox.rest_news_service.service;
 
-import org.springframework.data.domain.Page;
 import ru.skillbox.rest_news_service.model.News;
-import ru.skillbox.rest_news_service.web.model.NewsFilter;
+import ru.skillbox.rest_news_service.web.model.*;
 
 
 public interface NewsService {
-    Page<News> findAll(int page, int size);
+    NewsListResponse findAll(int page, int size);
 
-    News findById(Long id);
+    NewsResponseWithComments findById(Long id);
 
-    News save(News news);
+    News findNewsById(Long id);
 
-    News update(News news);
+    NewsResponse save(UpsertNewsRequest request);
+
+    NewsResponse update(Long newsId, UpsertNewsRequest request);
 
     void deleteById(Long id);
 
-    Page<News> filterBy(NewsFilter filter);
+    NewsListResponse filterBy(NewsFilter filter);
 }

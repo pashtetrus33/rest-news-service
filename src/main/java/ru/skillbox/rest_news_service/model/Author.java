@@ -35,17 +35,11 @@ public class Author {
     @Builder.Default
     private List<Comment> comments = new ArrayList<>();
 
-    public void addNews(News news) {
-        if (newsList == null) {
-            newsList = new ArrayList<>();
-        }
+      public void addNews(News news) {
         newsList.add(news);
     }
 
     public void addComment(Comment comment) {
-        if (comments == null) {
-            comments = new ArrayList<>();
-        }
         comments.add(comment);
     }
 }

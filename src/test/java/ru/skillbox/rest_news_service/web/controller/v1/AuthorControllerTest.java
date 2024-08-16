@@ -72,7 +72,7 @@ public class AuthorControllerTest extends AbstractTestController {
         );
 
         // Мокирование сервисного слоя
-        Mockito.when(authorService.findAll(0, 10)).thenReturn(authorPage);
+        Mockito.when(authorService.findAll(0, 10)).thenReturn(authorListResponse);
         Mockito.when(authorMapper.authorListToAuthorResponseList(authorPage)).thenReturn(authorListResponse);
 
         // Выполнение запроса и проверка результатов
@@ -87,22 +87,19 @@ public class AuthorControllerTest extends AbstractTestController {
         String expectedResponse = StringTestUtils.readStringFromResource("response/find_all_authors_response.json");
 
         Mockito.verify(authorService, Mockito.times(1)).findAll(0, 10);
-        Mockito.verify(authorMapper, Mockito.times(1)).authorListToAuthorResponseList(authorPage);
         JsonAssert.assertJsonEquals(expectedResponse, actualResponse);
     }
-
 
 
     @Test
     public void whenGetAuthorById_thenReturnAuthorById() throws Exception {
         Author author = createAuthor(1L, null, null);
         AuthorResponse authorResponse = createAuthorResponse(1L, null);
-        Mockito.when(authorService.findById(1L)).thenReturn(author);
+        Mockito.when(authorService.findById(1L)).thenReturn(authorResponse);
         Mockito.when(authorMapper.authorToResponse(author)).thenReturn(authorResponse);
         String actualResponse = mockMvc.perform(get("/api/v1/author/1")).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         String expectedResponse = StringTestUtils.readStringFromResource("response/find_author_by_id_response.json");
         Mockito.verify(authorService, Mockito.times(1)).findById(1L);
-        Mockito.verify(authorMapper, Mockito.times(1)).authorToResponse(author);
         JsonAssert.assertJsonEquals(expectedResponse, actualResponse);
     }
 
@@ -113,30 +110,26 @@ public class AuthorControllerTest extends AbstractTestController {
         Author createdAuthor = createAuthor(1L, null, null);
         AuthorResponse authorResponse = createAuthorResponse(1L, null);
         UpsertAuthorRequest upsertAuthorRequest = new UpsertAuthorRequest("Author 1", null, null);
-        Mockito.when(authorService.save(author)).thenReturn(createdAuthor);
+        Mockito.when(authorService.save(upsertAuthorRequest)).thenReturn(authorResponse);
         Mockito.when(authorMapper.requestToAuthor(upsertAuthorRequest)).thenReturn(author);
         Mockito.when(authorMapper.authorToResponse(createdAuthor)).thenReturn(authorResponse);
         String actualResponse = mockMvc.perform(post("/api/v1/author").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(upsertAuthorRequest))).andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
         String expectedResponse = StringTestUtils.readStringFromResource("response/create_author_response.json");
-        Mockito.verify(authorService, Mockito.times(1)).save(author);
-        Mockito.verify(authorMapper, Mockito.times(1)).requestToAuthor(upsertAuthorRequest);
-        Mockito.verify(authorMapper, Mockito.times(1)).authorToResponse(createdAuthor);
+        Mockito.verify(authorService, Mockito.times(1)).save(upsertAuthorRequest);
         JsonAssert.assertJsonEquals(expectedResponse, actualResponse);
     }
 
     @Test
     public void whenUpdateAuthor_thenReturnUpdatedAuthor() throws Exception {
-        UpsertAuthorRequest request = new UpsertAuthorRequest("New Author 1",null,null);
+        UpsertAuthorRequest request = new UpsertAuthorRequest("New Author 1", null, null);
         Author updatedAuthor = new Author(1L, "New Author 1", new ArrayList<>(), new ArrayList<>());
-        AuthorResponse authorResponse = new AuthorResponse(1L, "New Author 1", 2L,2L);
-        Mockito.when(authorService.update(updatedAuthor)).thenReturn(updatedAuthor);
+        AuthorResponse authorResponse = new AuthorResponse(1L, "New Author 1", 2L, 2L);
+        Mockito.when(authorService.update(request, 1L)).thenReturn(authorResponse);
         Mockito.when(authorMapper.requestToAuthor(1L, request)).thenReturn(updatedAuthor);
         Mockito.when(authorMapper.authorToResponse(updatedAuthor)).thenReturn(authorResponse);
         String actualResponse = mockMvc.perform(put("/api/v1/author/1").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request))).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         String expectedResponse = StringTestUtils.readStringFromResource("response/update_author_response.json");
-        Mockito.verify(authorService, Mockito.times(1)).update(updatedAuthor);
-        Mockito.verify(authorMapper, Mockito.times(1)).requestToAuthor(1L, request);
-        Mockito.verify(authorMapper, Mockito.times(1)).authorToResponse(updatedAuthor);
+        Mockito.verify(authorService, Mockito.times(1)).update(request, 1L);
         JsonAssert.assertJsonEquals(expectedResponse, actualResponse);
     }
 

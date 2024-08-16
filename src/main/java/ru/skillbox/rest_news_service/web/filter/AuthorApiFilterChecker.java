@@ -23,7 +23,7 @@ public class AuthorApiFilterChecker extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String headerValue = request.getHeader(HTTP_CLIENT_HEADER);
-        if (headerValue == null || headerValue.equals(clientApiKey)) {
+        if (headerValue == null || !headerValue.equals(clientApiKey)) {
             response.setHeader(HTTP_CLIENT_HEADER, "Invalid");
             response.sendError(HttpStatus.BAD_REQUEST.value(), "Заголовок X-Client-Api-Key отсутствует или указан не верно!");
             return;
